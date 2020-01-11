@@ -366,6 +366,9 @@ public class UECircleMenuLayout extends ViewGroup {
                 }
 
                 break;
+            case MotionEvent.ACTION_CANCEL:
+                getMoveAngleToNext(mTmpAngle);
+                break;
         }
         return super.dispatchTouchEvent(event);
     }
@@ -373,11 +376,25 @@ public class UECircleMenuLayout extends ViewGroup {
     private void getMoveAngleToNext(float moveAngle) {
         int count = getChildCount() - 1;
         int angle = 360 / count;
-        if (moveAngle >= (angle / 2)) {
-            switchToNextItem();
+        if(moveAngle >= 0){ // 顺时针滑動（向上）
+
+            if (moveAngle >= (angle / 2)) {
+                switchToNextItem();
+            } else {
+                switchToPreItem();
+            }
+
         } else {
-            switchToPreItem();
+            // 逆時針滑動（向下）
+
+            if (moveAngle >= (angle / 2)) {
+                switchToPreItem();
+            } else {
+                switchToNextItem();
+            }
+
         }
+
     }
 
 
@@ -459,7 +476,7 @@ public class UECircleMenuLayout extends ViewGroup {
     /**
      * 切换到上一个Item显示
      */
-    private void switchToPreItem(){
+    private void switchToPreItem() {
         int count = getChildCount() - 1;
 
         int angle = 360 / count;
