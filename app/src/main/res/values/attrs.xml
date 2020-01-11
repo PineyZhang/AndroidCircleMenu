@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="CircleViewIndicator">
+        <attr name="circleRadius" format="dimension|reference" />
+        <attr name="circleAutoPlay" format="boolean|reference" />
+        <attr name="circleRotateDirection" format="integer" />
+        <attr name="circleColor" format="color|reference" />
+        <attr name="circleBorderWidth" format="integer" />
+        <attr name="circleBorderType" format="integer" />
+    </declare-styleable>
+
+</resources>
