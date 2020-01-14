@@ -2,7 +2,10 @@ package com.zhy.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -36,6 +39,7 @@ public class UECircleMenuLayout extends ViewGroup {
     private int mMenuItemCount;
     private int mSelectIndex = 0;
     private int mInitSelectIndex = -1;
+    private Point bgCenter;
 
     /**
      * 该容器内child item的默认尺寸
@@ -229,15 +233,14 @@ public class UECircleMenuLayout extends ViewGroup {
 
             child.layout(left, top, left + cWidth, top + cWidth);
 
-            // 叠加尺寸
-            mStartAngle += angleDelay;
             if (mStartAngle == 180 && mInitSelectIndex == -1) {
                 mInitSelectIndex = i;
                 mSelectIndex = i;
 
-                selectIndexLeft = left;
-                selectIndexTop = top;
+                bgCenter = new Point(left + child.getMeasuredWidth() / 2, top + child.getMeasuredHeight() / 2);
             }
+            // 叠加尺寸
+            mStartAngle += angleDelay;
         }
 
         // 找到中心的view，如果存在设置onclick事件
@@ -256,13 +259,16 @@ public class UECircleMenuLayout extends ViewGroup {
             int cl = layoutRadius / 2 - cView.getMeasuredWidth() / 2;
             int cr = cl + cView.getMeasuredWidth();
             cView.layout(cl, cl, cr, cr);
+
         }
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
+    protected void dispatchDraw(Canvas canvas) {
+        Paint paint = new Paint();
+        paint.setColor(Color.parseColor("#80000000"));
+        canvas.drawRoundRect(new RectF(bgCenter.x - 300, bgCenter.y - 30, bgCenter.x + 120, bgCenter.y + 30), 100, 100, paint);
+        super.dispatchDraw(canvas);
     }
 
     private void setDefaultCurrentItem() {
@@ -726,7 +732,7 @@ public class UECircleMenuLayout extends ViewGroup {
             if (mTargetAngle != -1 && angelPerSecond > 0 && mStartAngle > mTargetAngle) {
                 mStartAngle = mTargetAngle;
                 isFling = false;
-            } else if(mTargetAngle != -1 && angelPerSecond < 0 && mStartAngle < mTargetAngle) {
+            } else if (mTargetAngle != -1 && angelPerSecond < 0 && mStartAngle < mTargetAngle) {
                 mStartAngle = mTargetAngle;
                 isFling = false;
             }
