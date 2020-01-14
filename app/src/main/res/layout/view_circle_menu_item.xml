@@ -12,7 +12,7 @@
         android:lines="1"
         android:maxLines="1"
         android:text="開啟你的電子支付之旅"
-        android:textColor="@android:color/black"
-        android:textSize="12sp" />
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
 </LinearLayout>

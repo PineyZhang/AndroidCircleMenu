@@ -1,6 +1,8 @@
 package com.zhy.view;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -46,7 +48,7 @@ public class UECircleMenuLayout extends ViewGroup {
     /**
      * 该容器的内边距,无视padding属性，如需边距请用该变量
      */
-    private static final float RADIO_PADDING_LAYOUT = 1 / 12f;
+    private static final float RADIO_PADDING_LAYOUT = 1 / 28f;
     /**
      * 当每秒移动角度达到该值时，认为是快速移动
      */
@@ -79,11 +81,14 @@ public class UECircleMenuLayout extends ViewGroup {
      */
     private boolean isFling;
 
+    private int selectIndexLeft;
+    private int selectIndexTop;
+
     private AutoPlayTask mAutoPlayTask;
     private boolean mAutoPlayAble = true;
     private int mAutoPlayInterval = 3000;
 
-    private Position[] mPositions;
+//    private Position[] mPositions;
 
     private OnMenuItemClickListener mOnMenuItemClickListener;
 
@@ -229,9 +234,10 @@ public class UECircleMenuLayout extends ViewGroup {
             if (mStartAngle == 180 && mInitSelectIndex == -1) {
                 mInitSelectIndex = i;
                 mSelectIndex = i;
-            }
 
-            addItemPosition(i, new Position(i, mStartAngle));
+                selectIndexLeft = left;
+                selectIndexTop = top;
+            }
         }
 
         // 找到中心的view，如果存在设置onclick事件
@@ -253,6 +259,12 @@ public class UECircleMenuLayout extends ViewGroup {
         }
     }
 
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+    }
+
     private void setDefaultCurrentItem() {
 
         int count = getChildCount();
@@ -265,14 +277,6 @@ public class UECircleMenuLayout extends ViewGroup {
         mCurrentAngle = angleDelay * selectionIndex; // 180°
 
     }
-
-    private void addItemPosition(int itemIndex, Position position) {
-        if (mPositions == null) {
-            mPositions = new Position[getChildCount()];
-        }
-        mPositions[itemIndex] = position;
-    }
-
 
     /**
      * 记录上一次的x，y坐标
@@ -297,7 +301,7 @@ public class UECircleMenuLayout extends ViewGroup {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-
+                mTargetAngle = -1;
                 mLastX = x;
                 mLastY = y;
                 mDownTime = System.currentTimeMillis();
@@ -313,7 +317,7 @@ public class UECircleMenuLayout extends ViewGroup {
 
                 break;
             case MotionEvent.ACTION_MOVE:
-
+                mTargetAngle = -1;
                 /**
                  * 获得开始的角度
                  */
@@ -354,10 +358,30 @@ public class UECircleMenuLayout extends ViewGroup {
 
                 // 如果达到该值认为是快速移动
                 if (Math.abs(anglePerSecond) > mFlingableValue && !isFling) {
+                    mTargetAngle = -1;
                     // post一个任务，去自动滚动
+                    isFling = true;
                     post(mFlingRunnable = new AutoFlingRunnable(anglePerSecond));
 
                     return true;
+                } else {
+                    int perAngle = 360 / (getChildCount() - 1);
+                    int minIndex = ((int) (mStartAngle / perAngle)) % 10;
+                    int maxIndex = (minIndex + 1) % (getChildCount() - 1);
+                    int volicity = 0;
+                    if (mStartAngle % (perAngle) > perAngle / 2) {
+                        mTargetAngle = maxIndex * perAngle;
+                        volicity = 50;
+                        mSelectIndex = (int) ((getChildCount() - 1) - ((mInitSelectIndex + mStartAngle / perAngle) % (getChildCount() - 1)));
+                    } else {
+                        mTargetAngle = minIndex * perAngle;
+                        volicity = -50;
+                        mSelectIndex = (int) ((getChildCount() - 1) - ((mInitSelectIndex + mStartAngle / perAngle) % (getChildCount() - 1)));
+                    }
+                    Log.e("xxxxxxx", " mSelectIndex111 " + mSelectIndex);
+                    isFling = true;
+                    post(mFlingRunnable = new AutoFlingRunnable(volicity));
+                    // 重新布局
                 }
 
                 // 如果当前旋转角度超过NOCLICK_VALUE屏蔽点击
@@ -376,7 +400,7 @@ public class UECircleMenuLayout extends ViewGroup {
     private void getMoveAngleToNext(float moveAngle) {
         int count = getChildCount() - 1;
         int angle = 360 / count;
-        if(moveAngle >= 0){ // 顺时针滑動（向上）
+        if (moveAngle >= 0) { // 顺时针滑動（向上）
 
             if (moveAngle >= (angle / 2)) {
                 switchToNextItem();
@@ -394,7 +418,6 @@ public class UECircleMenuLayout extends ViewGroup {
             }
 
         }
-
     }
 
 
@@ -459,9 +482,7 @@ public class UECircleMenuLayout extends ViewGroup {
     private void switchToNextItem() {
 
         int count = getChildCount() - 1;
-
         int angle = 360 / count;
-
         double nextAngle = mCurrentAngle / angle % 360;
 
         mCurrentAngle = nextAngle;
@@ -471,6 +492,15 @@ public class UECircleMenuLayout extends ViewGroup {
         Log.i(TAG, "mCurrentAngle:" + mCurrentAngle);
         isFling = true;
         post(mFlingRunnable = new AutoFlingRunnable(100));
+
+//        int selectIndex = (mSelectIndex ) % count;
+//        int nextIndex = (mSelectIndex + 1) % count;
+//        TextView selectChild = getChildAt(selectIndex).findViewById(R.id.id_circle_menu_item_text);
+//        TextView nextChild = getChildAt(nextIndex).findViewById(R.id.id_circle_menu_item_text);
+//        if (selectChild != null && nextChild != null) {
+//            selectChild.setTextColor(getResources().getColor(R.color.colorAccent));
+//            nextChild.setTextColor(Color.parseColor("#000000"));
+//        }
     }
 
     /**
@@ -478,18 +508,16 @@ public class UECircleMenuLayout extends ViewGroup {
      */
     private void switchToPreItem() {
         int count = getChildCount() - 1;
-
         int angle = 360 / count;
-
         double nextAngle = mCurrentAngle / angle % 360;
 
         mCurrentAngle = nextAngle;
         mStartAngle %= 360;
-        mTargetAngle = mStartAngle - angle;
+        mTargetAngle = mStartAngle + angle;
 
         Log.i(TAG, "mCurrentAngle:" + mCurrentAngle);
         isFling = true;
-        post(mFlingRunnable = new AutoFlingRunnable(-100));
+        post(mFlingRunnable = new AutoFlingRunnable(100));
     }
 
     /**
@@ -695,7 +723,10 @@ public class UECircleMenuLayout extends ViewGroup {
             // 逐渐减小这个值
             angelPerSecond /= 1.0666F;
 
-            if (mTargetAngle != -1 && mStartAngle > mTargetAngle) {
+            if (mTargetAngle != -1 && angelPerSecond > 0 && mStartAngle > mTargetAngle) {
+                mStartAngle = mTargetAngle;
+                isFling = false;
+            } else if(mTargetAngle != -1 && angelPerSecond < 0 && mStartAngle < mTargetAngle) {
                 mStartAngle = mTargetAngle;
                 isFling = false;
             }
